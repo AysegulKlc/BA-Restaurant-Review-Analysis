@@ -4,7 +4,17 @@
  * Çok Kötü / Kötü / Nötr / İyi / Çok İyi
  */
 
+// ── API Base URL (localhost vs Render) ───────────────────────────
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://127.0.0.1:5000'
+  : 'https://ba-restaurant-review-analysis.onrender.com';
+
 localStorage.removeItem('geminiApiKey');
+ * @module SentimentAnalyzer
+ * 1-10 Skor Sistemi ile Hibrit Analiz Motoru.
+ * Çok Kötü / Kötü / Nötr / İyi / Çok İyi
+ */
+
 
 // ── Duygu Sözlükleri ────────────────────────────────────────────
 const POSITIVE_WORDS = [
@@ -270,7 +280,7 @@ async function analyzeData(cleanedData) {
   const { rows, commentCol, ratingCol, dateCol } = cleanedData;
 
   try {
-    const response = await fetch('http://127.0.0.1:5000/api/analyze', {
+    const response = await fetch(`${API_BASE}/api/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows, commentCol })
