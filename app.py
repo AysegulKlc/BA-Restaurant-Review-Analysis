@@ -30,16 +30,15 @@ def index():
 
 @app.route('/css/<path:filename>')
 def css_files(filename):
-    return send_from_directory(os.path.join(BASE_DIR, 'css'), filename)
+    return send_from_directory(os.path.join(BASE_DIR, 'CSS'), filename)
 
 @app.route('/js/<path:filename>')
 def js_files(filename):
-    return send_from_directory(os.path.join(BASE_DIR, 'js'), filename)
+    return send_from_directory(os.path.join(BASE_DIR, 'JS'), filename)
 
 @app.route('/pages/<path:filename>')
 def pages_files(filename):
-    return send_from_directory(os.path.join(BASE_DIR, 'pages'), filename)
-
+    return send_from_directory(os.path.join(BASE_DIR, 'PAges'), filename)
 @app.route('/<path:filename>')
 def static_files(filename):
     mime_type, _ = mimetypes.guess_type(filename)
