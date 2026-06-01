@@ -94,12 +94,15 @@ def analyze_reviews():
 
         prompt = f"{SISTEM_TALIMATI}\n\nYorumlar:\n{yorum_metinleri}"
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent?key={API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent"
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {"temperature": 0.1}
         }
-        resp = requests.post(url, json=payload, timeout=30)
+        resp = requests.post(url, json=payload, timeout=30, headers={
+            "x-goog-api-key": API_KEY,
+            "Content-Type": "application/json"
+        })
         resp.raise_for_status()
         result = resp.json()
         ai_text = result['candidates'][0]['content']['parts'][0]['text']
