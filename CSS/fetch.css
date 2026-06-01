@@ -1,0 +1,259 @@
+/* ── Kaynak Sekmeleri ──────────────────────────────────────────── */
+.source-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  background: #f4f5f7;
+  padding: 5px;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.source-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.source-tab:hover {
+  background: #e9eaec;
+  color: #374151;
+}
+
+.source-tab.active {
+  background: #fff;
+  color: #1a1a2e;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
+  font-weight: 600;
+}
+
+/* ── Panel Görünürlüğü ─────────────────────────────────────────── */
+.source-panel {
+  display: none;
+}
+
+.source-panel.active {
+  display: block;
+  animation: panelIn 0.22s ease;
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Fetch Kartı ───────────────────────────────────────────────── */
+.fetch-card {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.fetch-card__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.fetch-card__icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.fetch-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.fetch-card__sub {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+/* ── Form Alanları ─────────────────────────────────────────────── */
+.fetch-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.fetch-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fetch-field label {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fetch-field__link {
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: #4f7ef8;
+  text-decoration: none;
+}
+.fetch-field__link:hover { text-decoration: underline; }
+
+.fetch-field input {
+  padding: 10px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  color: #111827;
+  background: #fafafa;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  font-family: inherit;
+}
+
+.fetch-field input:focus {
+  border-color: #4f7ef8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(79,126,248,0.12);
+}
+
+.fetch-field input::placeholder {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.fetch-field__hint {
+  font-size: 0.76rem;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.fetch-divider {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-weight: 500;
+  position: relative;
+}
+
+/* ── Fetch Butonları ───────────────────────────────────────────── */
+.btn--fetch {
+  padding: 11px 22px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+  align-self: flex-start;
+}
+
+.btn--google {
+  background: linear-gradient(135deg, #4285f4, #3367d6);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(66,133,244,0.3);
+}
+
+.btn--google:hover {
+  background: linear-gradient(135deg, #3367d6, #2851a3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66,133,244,0.4);
+}
+
+.btn--ys {
+  background: linear-gradient(135deg, #ff6b35, #e85d2b);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255,107,53,0.3);
+}
+
+.btn--ys:hover {
+  background: linear-gradient(135deg, #e85d2b, #d4521f);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255,107,53,0.4);
+}
+
+/* ── Durum Mesajları ───────────────────────────────────────────── */
+.fetch-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 14px;
+  animation: panelIn 0.2s ease;
+}
+
+.fetch-status--loading {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.fetch-status--error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.fetch-status--success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.fetch-status__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #93c5fd;
+  border-top-color: #1d4ed8;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Bilgi Satırları ───────────────────────────────────────────── */
+.fetch-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.fetch-info__item {
+  font-size: 0.76rem;
+  color: #6b7280;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 4px 10px;
+}

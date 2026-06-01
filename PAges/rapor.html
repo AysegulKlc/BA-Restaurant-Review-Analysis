@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aksiyon Raporu – Restoran Analiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a class="navbar__logo" href="../index.html">🍽️ <span>Restoran</span>Analiz</a>
+    <ul class="navbar__links">
+      <li><a href="../index.html">Yükle</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="rapor.html" class="active">AI Aksiyon Raporu</a></li>
+    </ul>
+  </nav>
+
+  <main class="rapor">
+    <div class="page-header" style="margin-bottom:24px">
+      <h1 class="page-header__title">🛠️ Sorun & Çözüm Raporu</h1>
+      <p style="color:var(--text-muted);margin-top:8px">Olumsuz yorumların analizi ve doğrudan uygulanabilir iyileştirme tavsiyeleri</p>
+    </div>
+
+    <div class="warning-banner" id="warningBanner" style="display:none;">
+      ⚠️ Henüz CSV yüklenmedi — <strong>demo veri</strong> kullanılarak rapor oluşturulacak.
+      <a href="../index.html" style="color:#7a5a10;font-weight:700;margin-left:6px">Veri yükle →</a>
+    </div>
+
+    <div style="text-align:center;margin-bottom:36px">
+      <button class="btn btn--primary" id="generateBtn" style="font-size:1rem;padding:15px 40px">
+        ✨ Çözüm Raporunu Başlat
+      </button>
+    </div>
+
+    <div class="rapor-output" id="raporOutput">
+      <div class="summary-grid" id="summaryGrid"></div>
+      <div class="ai-report-card">
+        <div class="ai-report-card__header">
+          <h2 class="ai-report-card__title">Operasyonel İyileştirme Planı</h2>
+          <span class="ai-badge">Yapay Zeka Destekli</span>
+        </div>
+        <div class="ai-content" id="aiContent"></div>
+      </div>
+      <div class="rapor-actions">
+        <button class="btn btn--outline" id="regenerateBtn">↺ Yeniden Oluştur</button>
+        <button class="btn btn--dark" onclick="window.print()">🖨️ PDF Olarak Kaydet / Yazdır</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/clean.js"></script>
+  <script src="../js/analyze.js"></script>
+  <script src="../js/config.js"></script>
+
+  <script>
+    const GEMINI_ENDPOINT = (key) =>
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${key}`;
+
+    const DEMO_DATA = {
+      headers: ['yorum'],
+      rows: [
+        { yorum: 'Her zaman komşu fırından sipariş verdiğim için eksik gönderildiğini tespit ettim. Tamamlamak için bilgi verilmeden gönderilen 2 adet vişneli kurabiye özür olamaz nerede eski komşu fırın hizmet anlayışı.' },
+        { yorum: 'Masalar çok kirliydi ve garsonlar bizimle hiç ilgilenmedi, 40 dakika yemek bekledik.' }
+      ],
+      commentCol: 'yorum'
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const stored = localStorage.getItem('csvData');
+      if (!stored) document.getElementById('warningBanner').style.display = 'flex';
+      document.getElementById('generateBtn').addEventListener('click', generateReport);
+      document.getElementById('regenerateBtn').addEventListener('click', generateReport);
+    });
+
+    function generateLocalActionReport(negReviews) {
+      let html = `<h3 style="color:#2d7a4f; margin-bottom:16px;">🔍 Operasyonel İyileştirme Planı (Lokal Analiz Motoru)</h3>`;
+      html += `<p style="margin-bottom:16px;">Google API kısıtlaması nedeniyle rapor, yüklediğiniz verilerdeki <strong>${negReviews.length} olumsuz şikayet</strong> satır satır taranarak anında oluşturulmuştur.</p>`;
+
+      let groups = { 'Servis ve Gönderim': [], 'Yemek Kalitesi': [], 'Hijyen': [], 'Personel & Garsonlar': [] };
+      negReviews.forEach(r => {
+        let txt = r.text.toLowerCase();
+        if (txt.includes('eksik') || txt.includes('servis') || txt.includes('gönder') || txt.includes('kurye') || txt.includes('yavaş')) groups['Servis ve Gönderim'].push(r.text);
+        else if (txt.includes('kir') || txt.includes('pis') || txt.includes('temiz')) groups['Hijyen'].push(r.text);
+        else if (txt.includes('garson') || txt.includes('kaba') || txt.includes('personel') || txt.includes('ilgilen')) groups['Personel & Garsonlar'].push(r.text);
+        else groups['Yemek Kalitesi'].push(r.text);
+      });
+
+      Object.entries(groups).forEach(([cat, list]) => {
+        if (list.length === 0) return;
+        html += `<h3 style="color:#c8410a; margin-top:24px; border-bottom:1px solid #e8e0d5; padding-bottom:8px;">🚨 Sorun Alanı: ${cat}</h3>`;
+        html += `<ul style="margin-top:10px; margin-bottom:20px; padding-left:20px;">`;
+        list.slice(0, 2).forEach(msg => {
+          html += `<li style="margin-bottom:8px;"><strong>Müşteri Geri Bildirimi:</strong> "${msg}"</li>`;
+        });
+        html += `<li style="margin-bottom:8px; color:#1c1a17;"><strong>Nasıl Düzeltilmeli (Aksiyon Tavsiyesi):</strong> `;
+        if (cat === 'Servis ve Gönderim') {
+          html += `Sipariş paketleme sürecinde "çift onay" (double-check) kontrol listesine geçilmeli. Eksik ürün gönderimlerinde müşteriye bilgi vermeden ikram koymak yerine KESİNLİKLE telefonla aranarak özür dilenmeli ve telafi için rızası alınmalıdır.`;
+        } else if (cat === 'Hijyen') {
+          html += `Masa ve salon temizlik periyotları sıklaştırılmalı, günlük ve saatlik hijyen takip çizelgeleri restoran müdürü tarafından her saat başı imza altına alınmalıdır.`;
+        } else if (cat === 'Personel & Garsonlar') {
+          html += `Çalışan kadroya kriz yönetimi, müşteri karşılama ve nezaket kuralları eğitimi acilen verilmeli, yoğun saatlerdeki masalar arası iş bölümü yeniden organize edilmelidir.`;
+        } else {
+          html += `Ürünlerin standart mutfak reçeteleri, sıcaklık muhafazaları ve pişirme süreleri şef tarafından günlük olarak denetlenmeli, paket servis için termal çantalar yenilenmelidir.`;
+        }
+        html += `</li></ul>`;
+      });
+      return html;
+    }
+
+    async function generateReport() {
+      const apiKey = typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '';
+      let csvData;
+      const stored = localStorage.getItem('csvData');
+      try { csvData = stored ? JSON.parse(stored) : DEMO_DATA; } catch { csvData = DEMO_DATA; }
+
+      const result = await window.analyzeData(csvData);
+      const negReviews = result.reviews.filter(r => r.sentiment === 'negative');
+
+      // Özet Kartları Render Et
+      const bestCat = Object.entries(result.catScores).sort((a, b) => b[1] - a[1])[0];
+      document.getElementById('summaryGrid').innerHTML = `
+        <div class="summary-card"><div class="summary-card__label">Toplam Yorum</div><div class="summary-card__value">${result.stats.total}</div></div>
+        <div class="summary-card"><div class="summary-card__label">Ort. Puan</div><div class="summary-card__value">${result.stats.avgRating || '–'}</div></div>
+        <div class="summary-card"><div class="summary-card__label">Olumsuz Oran</div><div class="summary-card__value" style="color:var(--negative)">${result.stats.negativeRate}%</div></div>
+        <div class="summary-card"><div class="summary-card__label">En İyi Alan</div><div class="summary-card__value" style="font-size:1.1rem">${bestCat ? bestCat[0] : '–'}</div></div>
+      `;
+
+      document.getElementById('raporOutput').classList.add('visible');
+      const aiContent = document.getElementById('aiContent');
+      aiContent.innerHTML = '<span class="cursor"></span>';
+
+      if (negReviews.length === 0) {
+        aiContent.innerHTML = "<p>Harika! Analiz edilecek operasyonel bir olumsuz yorum bulunamadı.</p>";
+        return;
+      }
+
+      const generateBtn = document.getElementById('generateBtn');
+      const regenBtn = document.getElementById('regenerateBtn');
+      generateBtn.disabled = true; regenBtn.disabled = true;
+
+      if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE' || apiKey === '') {
+        aiContent.innerHTML = generateLocalActionReport(negReviews);
+        generateBtn.disabled = false; regenBtn.disabled = false;
+        return;
+      }
+
+      const reviewText = negReviews.slice(0, 80).map((r, i) => `${i+1}. "${r.text}"`).join('\n\n');
+      const prompt = `Aşağıdaki olumsuz restoran şikayetlerini analiz et ve aksiyon planı çıkar:\n${reviewText}`;
+
+      try {
+        const response = await fetch(GEMINI_ENDPOINT(apiKey), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4 } })
+        });
+
+        if (!response.ok) throw new Error();
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = ''; let fullText = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') break;
+            try {
+              const json = JSON.parse(data);
+              const chunk = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (chunk) {
+                fullText += chunk;
+                aiContent.innerHTML = formatReport(fullText) + '<span class="cursor"></span>';
+              }
+            } catch {}
+          }
+        }
+        aiContent.innerHTML = formatReport(fullText);
+      } catch {
+        // API Sürüm/Kota hatası verirse anında lokal akıllı şablonu bas!
+        aiContent.innerHTML = generateLocalActionReport(negReviews);
+      } finally {
+        generateBtn.disabled = false; regenBtn.disabled = false;
+      }
+    }
+
+    function formatReport(text) {
+      let html = text
+        .replace(/^### (.+)$/gm, '<h3 style="color:#c8410a; margin-top:24px; border-bottom:1px solid #e8e0d5; padding-bottom:8px;">$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^[-•*] (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>(\n|$))+/gs, (match) => `<ul style="margin-top:10px; margin-bottom:20px; padding-left:20px;">${match}</ul>`);
+      return html.split(/\n{2,}/).map(b => (b.startsWith('<h3') || b.startsWith('<ul')) ? b : `<p style="margin-bottom:12px;">${b.trim()}</p>`).join('');
+    }
+  </script>
+</body>
+</html>

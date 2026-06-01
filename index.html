@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restoran Analiz – Müşteri Yorum Analizi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/fetch.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar__logo">🍽️ <span>Restoran</span>Analiz</div>
+    <ul class="navbar__links">
+      <li><a href="index.html" class="active">Yükle</a></li>
+      <li><a href="pages/dashboard.html">Dashboard</a></li>
+      <li><a href="pages/rapor.html">AI Rapor</a></li>
+    </ul>
+  </nav>
+
+  <section class="hero">
+    <div class="hero__left">
+      <h1 class="hero__title">
+        Müşteri yorumlarınızı<br />
+        <em>yapay zeka ile</em> analiz edin
+      </h1>
+      <p class="hero__sub">
+        CSV yükleyin ya da doğrudan Google Reviews veya Yemeksepeti'nden yorumları otomatik çekin.
+      </p>
+
+      <!-- ── Kaynak Seçim Sekmeleri ── -->
+      <div class="source-tabs">
+        <button class="source-tab active" data-tab="csv">
+          📂 CSV Yükle
+        </button>
+        <button class="source-tab" data-tab="google">
+          <img src="https://www.google.com/favicon.ico" width="14" height="14" alt="" style="vertical-align:middle;margin-right:5px;">
+          Google Reviews
+        </button>
+        <button class="source-tab" data-tab="yemeksepeti">
+          🍱 Yemeksepeti
+        </button>
+      </div>
+
+      <!-- ── Panel 1: CSV ── -->
+      <div class="source-panel active" id="panel-csv">
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" accept=".csv" id="fileInput" class="upload-zone__input" />
+          <span class="upload-zone__icon">📂</span>
+          <div class="upload-zone__title">CSV dosyasını buraya sürükleyin</div>
+          <div class="upload-zone__sub">veya tıklayın • Maksimum boyut: 10 MB</div>
+        </div>
+
+        <a class="sample-link" id="sampleBtn">
+          ⬇️ Örnek CSV dosyasını indir
+        </a>
+
+        <div class="clean-report" id="cleanReport"></div>
+
+        <div class="preview-section" id="previewSection">
+          <div class="preview-info">
+            <span class="preview-info__name" id="previewFileName"></span>
+            <div id="previewCount"></div>
+          </div>
+          <div class="table-wrap" id="previewTable"></div>
+        </div>
+      </div>
+
+      <!-- ── Panel 2: Google Reviews ── -->
+      <div class="source-panel" id="panel-google">
+        <div class="fetch-card">
+          <div class="fetch-card__header">
+            <div class="fetch-card__icon">🗺️</div>
+            <div>
+              <div class="fetch-card__title">Google Reviews'dan Çek</div>
+              <div class="fetch-card__sub">SerpApi ile Google Maps yorumlarını otomatik getirin</div>
+            </div>
+          </div>
+
+          <div class="fetch-form">
+            <div class="fetch-field">
+              <label for="googlePlaceName">Restoran Adı & Şehir</label>
+              <input
+                type="text"
+                id="googlePlaceName"
+                placeholder="örn: Köfteci Yusuf Kayseri"
+                autocomplete="off"
+              />
+              <span class="fetch-field__hint">Ne kadar spesifik olursa o kadar iyi sonuç alırsınız</span>
+            </div>
+
+            <div class="fetch-field">
+              <label for="serpApiKey">
+                SerpApi Key
+                <a href="https://serpapi.com/manage-api-key" target="_blank" class="fetch-field__link">
+                  Ücretsiz al →
+                </a>
+              </label>
+              <input
+                type="password"
+                id="serpApiKey"
+                placeholder="Ayda 100 ücretsiz arama • serpapi.com"
+                autocomplete="off"
+              />
+              <span class="fetch-field__hint">Key bir kez girildiğinde tarayıcıda hatırlanır</span>
+            </div>
+
+            <button class="btn btn--fetch btn--google" id="fetchGoogleBtn">
+              🔍 Yorumları Getir
+            </button>
+          </div>
+
+          <div class="fetch-status" id="googleStatus" style="display:none"></div>
+
+          <div class="fetch-info">
+            <div class="fetch-info__item">✅ Ücretsiz: Ayda 100 arama</div>
+            <div class="fetch-info__item">📊 Maks ~50 yorum/restoran</div>
+            <div class="fetch-info__item">⚡ Kurulum gerektirmez</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Panel 3: Yemeksepeti ── -->
+      <div class="source-panel" id="panel-yemeksepeti">
+        <div class="fetch-card">
+          <div class="fetch-card__header">
+            <div class="fetch-card__icon">🍱</div>
+            <div>
+              <div class="fetch-card__title">Yemeksepeti'nden Çek</div>
+              <div class="fetch-card__sub">Restoran adı veya URL ile yorumları otomatik getirin</div>
+            </div>
+          </div>
+
+          <div class="fetch-form">
+            <div class="fetch-field">
+              <label for="ysName">Restoran Adı <span style="font-weight:400;opacity:.7">(opsiyonel)</span></label>
+              <input
+                type="text"
+                id="ysName"
+                placeholder="örn: Pizza Hut"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="fetch-divider">— veya —</div>
+
+            <div class="fetch-field">
+              <label for="ysUrl">Doğrudan Yemeksepeti URL'si <span style="font-weight:400;opacity:.7">(daha güvenilir)</span></label>
+              <input
+                type="url"
+                id="ysUrl"
+                placeholder="https://www.yemeksepeti.com/restaurant/..."
+                autocomplete="off"
+              />
+              <span class="fetch-field__hint">
+                Yemeksepeti'nde restorana gidip adres çubuğundan kopyalayın
+              </span>
+            </div>
+
+            <button class="btn btn--fetch btn--ys" id="fetchYsBtn">
+              🍱 Yorumları Getir
+            </button>
+          </div>
+
+          <div class="fetch-status" id="ysStatus" style="display:none"></div>
+
+          <div class="fetch-info">
+            <div class="fetch-info__item">✅ API key gerekmez</div>
+            <div class="fetch-info__item">⚠️ Yemeksepeti bot koruması varsa URL kullanın</div>
+            <div class="fetch-info__item">📊 Maks ~60 yorum/sayfa</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Analiz Butonu (tüm paneller için ortak) ── -->
+      <div style="margin-top: 24px;">
+        <button class="btn btn--primary" id="analyzeBtn" disabled>
+          📊 Analizi Başlat
+        </button>
+      </div>
+
+    </div>
+
+    <div class="hero__visual">
+      <div class="float-card">
+        <div class="float-card__label">Olumlu Yorumlar</div>
+        <div class="float-card__value">74%</div>
+        <div class="float-card__trend">↑ Yüksek memnuniyet</div>
+      </div>
+      <div class="float-card">
+        <div class="float-card__label">Ortalama Puan</div>
+        <div class="float-card__value">4.2 ★</div>
+        <div class="float-card__trend">↑ 5 üzerinden</div>
+      </div>
+      <div class="float-card">
+        <div class="float-card__label">Veri Kaynakları</div>
+        <div class="float-card__value">3</div>
+        <div class="float-card__trend">CSV · Google · Yemeksepeti</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2 class="features__title">Neler yapabilirsiniz?</h2>
+    <div class="features__grid">
+      <div class="feature-card">
+        <div class="feature-card__icon">🧹</div>
+        <div class="feature-card__title">Akıllı Veri Temizleme</div>
+        <div class="feature-card__desc">Bozuk encoding, farklı tarih formatları, kopya yorumlar ve spam otomatik temizlenir.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">🧠</div>
+        <div class="feature-card__title">Türkçe NLP Analizi</div>
+        <div class="feature-card__desc">Yemek, servis, hijyen, fiyat, personel ve bekleme kategorilerinde duygu analizi.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">📈</div>
+        <div class="feature-card__title">İnteraktif Dashboard</div>
+        <div class="feature-card__desc">Doughnut, bar, trend ve kelime bulutu grafikleri ile verinizi görselleştirin.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">✨</div>
+        <div class="feature-card__title">Gemini AI Raporu</div>
+        <div class="feature-card__desc">Streaming ile gerçek zamanlı profesyonel iş raporu ve iyileştirme önerileri.</div>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/clean.js"></script>
+  <script src="js/upload.js"></script>
+  <script src="js/fetch.js"></script>
+</body>
+</html>

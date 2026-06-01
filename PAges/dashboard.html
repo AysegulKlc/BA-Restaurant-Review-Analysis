@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – Restoran Analiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/score.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a class="navbar__logo" href="../index.html">🍽️ <span>Restoran</span>Analiz</a>
+    <ul class="navbar__links">
+      <li><a href="../index.html">Yükle</a></li>
+      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="rapor.html">AI Rapor</a></li>
+    </ul>
+  </nav>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-overlay__text">Veriler analiz ediliyor…</div>
+  </div>
+
+  <main class="dashboard">
+
+    <div class="warning-banner" id="warningBanner">
+      ⚠️ Henüz CSV yüklenmedi — <strong>demo veri</strong> gösteriliyor.
+      <a href="../index.html" style="color:#7a5a10;font-weight:700;margin-left:6px">Veri yükle →</a>
+    </div>
+
+    <div class="page-header">
+      <h1 class="page-header__title">Analiz Dashboard'u</h1>
+      <div class="page-header__meta" id="pageMeta"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card__label">Toplam Yorum</div>
+        <div class="stat-card__value" id="statTotal">–</div>
+        <div class="stat-card__sub">Tüm kayıtlar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Ortalama Puan</div>
+        <div class="stat-card__value" id="statAvg">–</div>
+        <div class="stat-card__sub">5 üzerinden</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Olumlu Yorumlar</div>
+        <div class="stat-card__value" id="statPos" style="color:var(--positive)">–</div>
+        <div class="stat-card__sub">Memnun müşteriler</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Olumsuz Yorumlar</div>
+        <div class="stat-card__value" id="statNeg" style="color:var(--negative)">–</div>
+        <div class="stat-card__sub">İyileştirme fırsatı</div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="chart-card">
+        <div class="chart-card__title">Duygu Dağılımı</div>
+        <div class="chart-wrap chart-wrap--sm">
+          <canvas id="sentimentChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card__title">Kategori Memnuniyet Skorları</div>
+        <div class="chart-wrap">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid-full">
+      <div class="chart-card">
+        <div class="chart-card__title">Puan Trendi (Zaman İçinde)</div>
+        <div class="chart-wrap">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid-3">
+      <div class="chart-card">
+        <div class="chart-card__title">Kelime Bulutu</div>
+        <div class="word-cloud" id="wordCloud"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card__title">Kategori Skorları</div>
+        <div class="score-bars" id="scoreBars"></div>
+      </div>
+    </div>
+
+    <section class="reviews-section">
+      <h2 style="font-size:1.3rem;margin-bottom:16px;color:var(--dark)">Yorumlar</h2>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">Tümü</button>
+        <button class="filter-tab" data-filter="pos">😊 Olumlu</button>
+        <button class="filter-tab" data-filter="neg">😞 Olumsuz</button>
+        <button class="filter-tab" data-filter="neutral">😐 Nötr</button>
+        <button class="filter-tab" data-filter="vgood">🌟 Çok İyi</button>
+        <button class="filter-tab" data-filter="bad">😡 Çok Kötü</button>
+      </div>
+
+      <div class="reviews-list" id="reviewsList"></div>
+    </section>
+
+    <div class="cta-section">
+      <h2 class="cta-section__title">Profesyonel Rapor Hazır mı?</h2>
+      <p class="cta-section__sub">
+        Gemini AI ile derinlemesine iş analizi ve iyileştirme önerileri alın.
+      </p>
+      <button class="btn btn--primary" id="reportBtn">
+        ✨ AI Rapor Oluştur
+      </button>
+    </div>
+
+  </main>
+
+  <script src="../js/clean.js"></script>
+  <script src="../js/config.js"></script> <script src="../js/analyze.js"></script>
+  <script src="../js/charts.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

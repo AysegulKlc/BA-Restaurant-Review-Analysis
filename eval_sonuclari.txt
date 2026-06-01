@@ -1,0 +1,15 @@
+RESTORAN YORUM ANALİZİ — MODEL DEĞERLENDİRME SONUÇLARI
+Veri seti: Restaurant_Reviews.csv | Toplam: 988 yorum
+
+Model    : Kural Tabanlı Sözlük (Lexicon)
+Accuracy : %79.66
+F1-Score : %76.44
+
+Model    : Naive Bayes (TF-IDF, 5-fold CV)
+Accuracy : %79.15
+F1-Score : %79.31
+
+Model    : SVM / LinearSVC (TF-IDF, 5-fold CV)
+Accuracy : %80.97
+F1-Score : %80.43
+
