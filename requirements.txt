@@ -1,4 +1,5 @@
 flask
 flask-cors
+google-genai>=1.0.0
 requests
 beautifulsoup4

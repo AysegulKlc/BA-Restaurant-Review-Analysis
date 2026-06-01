@@ -1,3 +1,4 @@
+from google import genai
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
@@ -40,7 +41,8 @@ def static_files(filename):
         return "Not Found", 404
 
 API_KEY = os.environ.get('GEMINI_API_KEY', '')
-MODEL_ID = "gemini-2.0-flash"
+client = genai.Client(api_key=API_KEY) if API_KEY else None
+MODEL_ID = "gemini-2.0-flash-lite"
 
 SISTEM_TALIMATI = """
 Müşteri yorumlarını analiz et. SADECE aşağıda verilen saf JSON formatında bir Array döndür.
@@ -99,15 +101,12 @@ def analyze_reviews():
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {"temperature": 0.1}
         }
-        resp = requests.post(url, json=payload, timeout=30, headers={
-            "x-goog-api-key": API_KEY,
-            "Content-Type": "application/json"
-        })
-        resp.raise_for_status()
-        result = resp.json()
-        ai_text = result['candidates'][0]['content']['parts'][0]['text']
-        ai_text = ai_text.replace("```json", "").replace("```", "").strip()
-        gemini_result = json.loads(ai_text)
+        response = client.models.generate_content(
+            model=MODEL_ID,
+            contents=prompt,
+        )
+        ai_raw_text = response.text.replace("```json", "").replace("```", "").strip()
+        gemini_result = json.loads(ai_raw_text)
 
         return jsonify({"status": "success", "data": gemini_result})
 
