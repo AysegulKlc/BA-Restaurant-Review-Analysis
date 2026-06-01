@@ -10,15 +10,35 @@ from bs4 import BeautifulSoup
 import time
 import re
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__)
 CORS(app)
 
 # ── Statik Dosya Servisi ─────────────────────────────────────────
-BASE_DIR = os.getcwd()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+@app.route('/debug')
+def debug():
+    files = []
+    for root, dirs, filenames in os.walk(BASE_DIR):
+        for f in filenames:
+            files.append(os.path.join(root, f).replace(BASE_DIR, ''))
+    return jsonify({"base_dir": BASE_DIR, "cwd": os.getcwd(), "files": files[:50]})
 
 @app.route('/')
 def index():
-    return app.send_static_file('index.html')
+    return send_from_directory(BASE_DIR, 'index.html')
+
+@app.route('/css/<path:filename>')
+def css_files(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'css'), filename)
+
+@app.route('/js/<path:filename>')
+def js_files(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'js'), filename)
+
+@app.route('/pages/<path:filename>')
+def pages_files(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'pages'), filename)
 
 @app.route('/<path:filename>')
 def static_files(filename):
