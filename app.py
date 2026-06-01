@@ -51,7 +51,7 @@ def static_files(filename):
 
 # ── Gemini Kurulumu ──────────────────────────────────────────────
 API_KEY = os.environ.get('GEMINI_API_KEY', '')
-client = genai.Client(api_key=API_KEY)
+client = genai.Client(api_key=API_KEY) if API_KEY else None
 MODEL_ID = "gemini-2.5-flash"
 
 SISTEM_TALIMATI = """
@@ -107,7 +107,11 @@ def test_gemini():
     except Exception as e:
         import traceback
         return jsonify({"status": "error", "message": str(e), "trace": traceback.format_exc()})
-
+@app.route('/api/analyze', methods=['POST'])
+def analyze_reviews():
+    if not client:
+        return jsonify({"status": "error", "message": "API key tanımlı değil."}), 500
+    try:
 @app.route('/api/analyze', methods=['POST'])
 def analyze_reviews():
     try:
