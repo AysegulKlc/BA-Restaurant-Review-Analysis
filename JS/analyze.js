@@ -281,10 +281,11 @@ async function analyzeData(cleanedData) {
 
   try {
     const response = await fetch(`${API_BASE}/api/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows, commentCol })
-    });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ rows, commentCol }),
+  signal: AbortSignal.timeout(120000) // 2 dakika bekle
+});
 
     if (!response.ok) throw new Error();
 

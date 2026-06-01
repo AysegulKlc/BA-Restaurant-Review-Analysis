@@ -105,7 +105,7 @@ def analyze_reviews():
         rows = data.get('rows', [])
         comment_col = data.get('commentCol', 'yorum')
 
-        reviews_to_process = rows[:20]
+        reviews_to_process = rows[:10]
 
         yorum_metinleri = ""
         for i, r in enumerate(reviews_to_process):
