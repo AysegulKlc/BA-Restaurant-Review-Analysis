@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 import time
 import re
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # ── Statik Dosya Servisi ─────────────────────────────────────────
@@ -18,7 +18,7 @@ BASE_DIR = os.getcwd()
 
 @app.route('/')
 def index():
-    return send_from_directory(BASE_DIR, 'index.html')
+    return app.send_static_file('index.html')
 
 @app.route('/<path:filename>')
 def static_files(filename):
