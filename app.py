@@ -49,7 +49,7 @@ try:
 except Exception as e:
     print(f"Gemini client hatası: {e}")
     client = None
-MODEL_ID = "gemini-1.5-flash"
+MODEL_ID = "gemini-2.0-flash"
 
 SISTEM_TALIMATI = """
 Müşteri yorumlarını analiz et. SADECE aşağıda verilen saf JSON formatında bir Array döndür.
