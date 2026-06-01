@@ -39,6 +39,7 @@ def js_files(filename):
 @app.route('/pages/<path:filename>')
 def pages_files(filename):
     return send_from_directory(os.path.join(BASE_DIR, 'PAges'), filename)
+
 @app.route('/<path:filename>')
 def static_files(filename):
     mime_type, _ = mimetypes.guess_type(filename)
@@ -92,12 +93,17 @@ FORMAT:
 """
 
 
-# ── 1. CSV Analiz Endpoint'i ─────────────────────────────────────
+# ── Ping ─────────────────────────────────────────────────────────
 @app.route('/api/ping')
 def ping():
     return jsonify({"status": "awake"})
+
+
+# ── Test ─────────────────────────────────────────────────────────
 @app.route('/api/test')
 def test_gemini():
+    if not client:
+        return jsonify({"status": "error", "message": "API key tanımlı değil."})
     try:
         response = client.models.generate_content(
             model=MODEL_ID,
@@ -107,13 +113,13 @@ def test_gemini():
     except Exception as e:
         import traceback
         return jsonify({"status": "error", "message": str(e), "trace": traceback.format_exc()})
+
+
+# ── 1. CSV Analiz Endpoint'i ─────────────────────────────────────
 @app.route('/api/analyze', methods=['POST'])
 def analyze_reviews():
     if not client:
         return jsonify({"status": "error", "message": "API key tanımlı değil."}), 500
-    try:
-@app.route('/api/analyze', methods=['POST'])
-def analyze_reviews():
     try:
         data = request.json
         rows = data.get('rows', [])
@@ -144,7 +150,7 @@ def analyze_reviews():
 
     except Exception as e:
         import traceback
-        print(traceback.format_exc())  # Bu satırı ekle
+        print(traceback.format_exc())
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -169,20 +175,13 @@ def get_google_reviews():
             "gl": "tr"
         }
 
-        search_resp = requests.get(
-            "https://serpapi.com/search",
-            params=search_params,
-            timeout=15
-        )
+        search_resp = requests.get("https://serpapi.com/search", params=search_params, timeout=15)
         search_resp.raise_for_status()
         search_data = search_resp.json()
 
         local_results = search_data.get("local_results", [])
         if not local_results:
-            return jsonify({
-                "status": "error",
-                "message": f"'{place_name}' için Google Maps'te sonuç bulunamadı."
-            }), 404
+            return jsonify({"status": "error", "message": f"'{place_name}' için Google Maps'te sonuç bulunamadı."}), 404
 
         place = local_results[0]
         data_id = place.get("data_id", "")
@@ -201,16 +200,11 @@ def get_google_reviews():
             "sort_by": "newestFirst"
         }
 
-        reviews_resp = requests.get(
-            "https://serpapi.com/search",
-            params=reviews_params,
-            timeout=15
-        )
+        reviews_resp = requests.get("https://serpapi.com/search", params=reviews_params, timeout=15)
         reviews_resp.raise_for_status()
         reviews_data = reviews_resp.json()
 
         raw_reviews = reviews_data.get("reviews", [])
-
         formatted_rows = []
         for rev in raw_reviews:
             text = rev.get("snippet", "") or rev.get("extracted_snippet", {}).get("original", "")
@@ -225,18 +219,11 @@ def get_google_reviews():
             })
 
         if not formatted_rows:
-            return jsonify({
-                "status": "error",
-                "message": "Bu restoran için yorum bulunamadı."
-            }), 404
+            return jsonify({"status": "error", "message": "Bu restoran için yorum bulunamadı."}), 404
 
         return jsonify({
             "status": "success",
-            "place": {
-                "name": place_title,
-                "rating": place_rating,
-                "total_reviews": place_reviews_count
-            },
+            "place": {"name": place_title, "rating": place_rating, "total_reviews": place_reviews_count},
             "rows": formatted_rows,
             "count": len(formatted_rows)
         })
@@ -275,36 +262,25 @@ def get_yemeksepeti_reviews():
                 href = restaurant_link['href']
                 restaurant_url = href if href.startswith('http') else f"https://www.yemeksepeti.com{href}"
             else:
-                return jsonify({
-                    "status": "error",
-                    "message": f"'{restaurant_name}' için Yemeksepeti'nde restoran bulunamadı. Doğrudan URL girmeyi deneyin."
-                }), 404
+                return jsonify({"status": "error", "message": f"'{restaurant_name}' için Yemeksepeti'nde restoran bulunamadı."}), 404
 
         if not restaurant_url:
             return jsonify({"status": "error", "message": "Restoran URL'si veya adı gerekli."}), 400
 
-        if '/comments' not in restaurant_url and 'reviews' not in restaurant_url:
-            reviews_url = restaurant_url.rstrip('/') + '/comments'
-        else:
-            reviews_url = restaurant_url
-
+        reviews_url = restaurant_url.rstrip('/') + '/comments' if '/comments' not in restaurant_url and 'reviews' not in restaurant_url else restaurant_url
         time.sleep(1)
 
         resp = requests.get(reviews_url, headers=headers, timeout=15)
         resp.encoding = 'utf-8'
 
         if resp.status_code == 403:
-            return jsonify({
-                "status": "error",
-                "message": "Yemeksepeti erişimi engelledi. Doğrudan URL'yi kopyalayarak tekrar deneyin."
-            }), 403
+            return jsonify({"status": "error", "message": "Yemeksepeti erişimi engelledi."}), 403
 
         if resp.status_code == 404:
             resp = requests.get(restaurant_url, headers=headers, timeout=15)
             resp.encoding = 'utf-8'
 
         soup = BeautifulSoup(resp.text, 'html.parser')
-
         place_name_tag = soup.find('h1') or soup.find(class_=re.compile(r'restaurant.name|title', re.I))
         place_name_text = place_name_tag.get_text(strip=True) if place_name_tag else restaurant_name or "Yemeksepeti Restoranı"
 
@@ -330,63 +306,40 @@ def get_yemeksepeti_reviews():
                 continue
 
         formatted_rows = []
-
         if json_reviews:
             for rev in json_reviews:
                 body = rev.get('reviewBody', '') or rev.get('description', '')
                 if not body:
                     continue
-                rating_val = None
-                rating_obj = rev.get('reviewRating', {})
-                if rating_obj:
-                    rating_val = rating_obj.get('ratingValue')
+                rating_val = rev.get('reviewRating', {}).get('ratingValue') if rev.get('reviewRating') else None
                 formatted_rows.append({
-                    "yorum": body,
-                    "puan": rating_val,
-                    "tarih": rev.get('datePublished', ''),
-                    "kaynak": "Yemeksepeti",
+                    "yorum": body, "puan": rating_val,
+                    "tarih": rev.get('datePublished', ''), "kaynak": "Yemeksepeti",
                     "yazar": rev.get('author', {}).get('name', 'Anonim') if isinstance(rev.get('author'), dict) else str(rev.get('author', 'Anonim'))
                 })
-
         elif review_items:
             for item in review_items[:60]:
-                text_tag = (
-                    item.find(class_=re.compile(r'text|body|content|description', re.I)) or
-                    item.find('p') or
-                    item.find('span', class_=re.compile(r'comment', re.I))
-                )
+                text_tag = (item.find(class_=re.compile(r'text|body|content|description', re.I)) or item.find('p') or item.find('span', class_=re.compile(r'comment', re.I)))
                 text = text_tag.get_text(strip=True) if text_tag else item.get_text(strip=True)
                 if not text or len(text) < 5:
                     continue
                 rating_tag = item.find(class_=re.compile(r'rating|star|puan', re.I))
                 rating = None
                 if rating_tag:
-                    rating_text = rating_tag.get_text(strip=True)
-                    rating_match = re.search(r'[\d.,]+', rating_text)
+                    rating_match = re.search(r'[\d.,]+', rating_tag.get_text(strip=True))
                     if rating_match:
                         rating = float(rating_match.group().replace(',', '.'))
                 date_tag = item.find(class_=re.compile(r'date|time|tarih', re.I)) or item.find('time')
-                date = date_tag.get_text(strip=True) if date_tag else ''
                 formatted_rows.append({
-                    "yorum": text,
-                    "puan": rating,
-                    "tarih": date,
-                    "kaynak": "Yemeksepeti",
-                    "yazar": "Anonim"
+                    "yorum": text, "puan": rating,
+                    "tarih": date_tag.get_text(strip=True) if date_tag else '',
+                    "kaynak": "Yemeksepeti", "yazar": "Anonim"
                 })
 
         if not formatted_rows:
-            return jsonify({
-                "status": "error",
-                "message": "Yorumlar çekilemedi. Doğrudan URL'yi kontrol edin ya da CSV yolunu kullanın."
-            }), 422
+            return jsonify({"status": "error", "message": "Yorumlar çekilemedi."}), 422
 
-        return jsonify({
-            "status": "success",
-            "place": {"name": place_name_text},
-            "rows": formatted_rows,
-            "count": len(formatted_rows)
-        })
+        return jsonify({"status": "success", "place": {"name": place_name_text}, "rows": formatted_rows, "count": len(formatted_rows)})
 
     except requests.exceptions.Timeout:
         return jsonify({"status": "error", "message": "Yemeksepeti isteği zaman aşımına uğradı."}), 504
