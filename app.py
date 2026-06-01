@@ -3,6 +3,8 @@ from flask_cors import CORS
 from google import genai
 from google.genai import types
 import json
+import os
+import mimetypes
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -17,7 +19,14 @@ def index():
 
 @app.route('/<path:filename>')
 def static_files(filename):
-    return send_from_directory('.', filename)
+    mime_type, _ = mimetypes.guess_type(filename)
+    if not mime_type:
+        mime_type = 'application/octet-stream'
+    try:
+        return send_from_directory('.', filename, mimetype=mime_type)
+    except Exception:
+        return "Not Found", 404
+
 # ── Gemini Kurulumu ──────────────────────────────────────────────
 API_KEY = "AIzaSyBEz3enTL9c8_KxNKn-2PXHMRUbfnS5sjM"
 client = genai.Client(api_key=API_KEY)
