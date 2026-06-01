@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from google import genai
 from google.genai import types
@@ -10,7 +10,14 @@ import re
 
 app = Flask(__name__)
 CORS(app)
+# Statik dosyaları sun
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
 
+@app.route('/<path:filename>')
+def static_files(filename):
+    return send_from_directory('.', filename)
 # ── Gemini Kurulumu ──────────────────────────────────────────────
 API_KEY = "AIzaSyBEz3enTL9c8_KxNKn-2PXHMRUbfnS5sjM"
 client = genai.Client(api_key=API_KEY)
