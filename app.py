@@ -129,6 +129,8 @@ def analyze_reviews():
         return jsonify({"status": "success", "data": gemini_result})
 
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())  # Bu satırı ekle
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
