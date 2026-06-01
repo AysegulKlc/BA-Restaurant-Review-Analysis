@@ -96,7 +96,17 @@ FORMAT:
 @app.route('/api/ping')
 def ping():
     return jsonify({"status": "awake"})
-
+@app.route('/api/test')
+def test_gemini():
+    try:
+        response = client.models.generate_content(
+            model=MODEL_ID,
+            contents="Merhaba, test mesajı.",
+        )
+        return jsonify({"status": "success", "response": response.text})
+    except Exception as e:
+        import traceback
+        return jsonify({"status": "error", "message": str(e), "trace": traceback.format_exc()})
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_reviews():
