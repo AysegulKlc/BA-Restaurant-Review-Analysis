@@ -93,6 +93,11 @@ FORMAT:
 
 
 # ── 1. CSV Analiz Endpoint'i ─────────────────────────────────────
+@app.route('/api/ping')
+def ping():
+    return jsonify({"status": "awake"})
+
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze_reviews():
     try:
@@ -100,7 +105,7 @@ def analyze_reviews():
         rows = data.get('rows', [])
         comment_col = data.get('commentCol', 'yorum')
 
-        reviews_to_process = rows[:60]
+        reviews_to_process = rows[:20]
 
         yorum_metinleri = ""
         for i, r in enumerate(reviews_to_process):

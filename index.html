@@ -228,7 +228,11 @@
       </div>
     </div>
   </section>
-
+<script>
+  // Sayfa açılınca Render sunucusunu uyandır
+  fetch('https://ba-restaurant-review-analysis.onrender.com/api/ping')
+    .catch(() => {}); // hata olsa bile sessizce geç
+</script>
   <script src="js/clean.js"></script>
   <script src="js/upload.js"></script>
   <script src="js/fetch.js"></script>
