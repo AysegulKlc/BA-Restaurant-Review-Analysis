@@ -1,6 +1,6 @@
 /* ===== 1. CSS DEĞİŞKENLERİ & RESET ===== */
 
-root {
+:root {
   --bg: #faf6f0;
   --accent: #c8410a;
   --dark: #1c1a17;
