@@ -16,14 +16,6 @@ CORS(app)
 # ── Statik Dosya Servisi ─────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-@app.route('/debug')
-def debug():
-    files = []
-    for root, dirs, filenames in os.walk(BASE_DIR):
-        for f in filenames:
-            files.append(os.path.join(root, f).replace(BASE_DIR, ''))
-    return jsonify({"base_dir": BASE_DIR, "cwd": os.getcwd(), "files": files[:50]})
-
 @app.route('/')
 def index():
     return send_from_directory(BASE_DIR, 'index.html')
@@ -97,22 +89,6 @@ FORMAT:
 @app.route('/api/ping')
 def ping():
     return jsonify({"status": "awake"})
-
-
-# ── Test ─────────────────────────────────────────────────────────
-@app.route('/api/test')
-def test_gemini():
-    if not client:
-        return jsonify({"status": "error", "message": "API key tanımlı değil."})
-    try:
-        response = client.models.generate_content(
-            model=MODEL_ID,
-            contents="Merhaba, test mesajı.",
-        )
-        return jsonify({"status": "success", "response": response.text})
-    except Exception as e:
-        import traceback
-        return jsonify({"status": "error", "message": str(e), "trace": traceback.format_exc()})
 
 
 # ── 1. CSV Analiz Endpoint'i ─────────────────────────────────────
