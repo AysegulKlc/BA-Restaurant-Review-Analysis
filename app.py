@@ -44,30 +44,28 @@ def static_files(filename):
 
 # ── Gemini Kurulumu ──────────────────────────────────────────────
 API_KEY = os.environ.get('GEMINI_API_KEY', '')
-client = genai.Client(api_key=API_KEY) if API_KEY else None
+try:
+    client = genai.Client(api_key=API_KEY) if API_KEY else None
+except Exception as e:
+    print(f"Gemini client hatası: {e}")
+    client = None
 MODEL_ID = "gemini-2.5-flash"
 
 SISTEM_TALIMATI = """
 Müşteri yorumlarını analiz et. SADECE aşağıda verilen saf JSON formatında bir Array döndür.
-Markdown (```json) etiketleri veya ekstra açıklamalar KESİNLİKLE olmayacak.
+Markdown veya ekstra açıklamalar KESİNLİKLE olmayacak.
 
 Her yorum için 1-10 arası bir "score" ver:
-- 1-2: Çok Kötü (ağır şikayet, iğrenç, rezalet gibi ifadeler)
-- 3-4: Kötü (belirgin olumsuzluk, hayal kırıklığı)
-- 5-6: Nötr (karışık duygular, hem olumlu hem olumsuz unsurlar)
-- 7-8: İyi (genel memnuniyet, küçük eksikler olabilir)
-- 9-10: Çok İyi (coşkulu övgü, kesinlikle tavsiye)
+- 1-2: Çok Kötü
+- 3-4: Kötü
+- 5-6: Nötr
+- 7-8: İyi
+- 9-10: Çok İyi
 
-"sentiment" alanı score'a göre:
+"sentiment" alanı:
 - 1-4  → "negative"
 - 5-6  → "neutral"
 - 7-10 → "positive"
-
-Nötr yorumlarda (score 5-6) catSentiments içinde her kategori için
-"positive" veya "negative" ayrı ayrı işaretle.
-
-Zıtlık içeren cümlelerde (örn: 'Yemek güzeldi ama servis yavaştı')
-kategorilerin duygularını ayrı ayrı yakala.
 
 FORMAT:
 [
@@ -114,7 +112,6 @@ def analyze_reviews():
             model=MODEL_ID,
             contents=prompt,
             config=types.GenerateContentConfig(
-                response_mime_type="application/json",
                 temperature=0.1
             )
         )
@@ -126,7 +123,7 @@ def analyze_reviews():
 
     except Exception as e:
         import traceback
-        print(traceback.format_exc())
+        print(f"ANALIZ HATASI: {traceback.format_exc()}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
