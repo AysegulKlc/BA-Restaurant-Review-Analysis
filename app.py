@@ -50,7 +50,7 @@ def static_files(filename):
         return "Not Found", 404
 
 # ── Gemini Kurulumu ──────────────────────────────────────────────
-API_KEY = "AIzaSyBEz3enTL9c8_KxNKn-2PXHMRUbfnS5sjM"
+API_KEY = os.environ.get('GEMINI_API_KEY', '')
 client = genai.Client(api_key=API_KEY)
 MODEL_ID = "gemini-2.5-flash"
 
