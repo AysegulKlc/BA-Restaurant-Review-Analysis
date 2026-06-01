@@ -16,7 +16,7 @@
     <ul class="navbar__links">
       <li><a href="../index.html">Yükle</a></li>
       <li><a href="dashboard.html">Dashboard</a></li>
-      <li><a href="rapor.html" class="active">AI Aksiyon Raporu</a></li>
+      <li><a href="rapor.html" class="active">AI Rapor</a></li>
     </ul>
   </nav>
 
@@ -70,20 +70,40 @@
       commentCol: 'yorum'
     };
 
+    function showLoading(msg) {
+      const aiContent = document.getElementById('aiContent');
+      aiContent.innerHTML = `
+        <div style="display:flex;align-items:center;gap:14px;color:#6b6460;padding:24px 0">
+          <div style="width:22px;height:22px;border:3px solid #e8e0d5;border-top-color:#c8410a;
+            border-radius:50%;animation:spin 0.75s linear infinite;flex-shrink:0"></div>
+          <span style="font-size:0.95rem">${msg}</span>
+        </div>
+      `;
+      document.getElementById('raporOutput').classList.add('visible');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       const stored = localStorage.getItem('csvData');
       if (!stored) document.getElementById('warningBanner').style.display = 'flex';
-      document.getElementById('generateBtn').addEventListener('click', generateReport);
-      document.getElementById('regenerateBtn').addEventListener('click', generateReport);
+
+      document.getElementById('generateBtn').addEventListener('click', () => {
+        showLoading('Veriler analiz ediliyor, lütfen bekleyin...');
+        generateReport();
+      });
+
+      document.getElementById('regenerateBtn').addEventListener('click', () => {
+        showLoading('Rapor yeniden oluşturuluyor...');
+        generateReport();
+      });
     });
 
     function generateLocalActionReport(negReviews) {
-      let html = `<h3 style="color:#2d7a4f; margin-bottom:16px;">🔍 Operasyonel İyileştirme Planı (Lokal Analiz Motoru)</h3>`;
-      html += `<p style="margin-bottom:16px;">Google API kısıtlaması nedeniyle rapor, yüklediğiniz verilerdeki <strong>${negReviews.length} olumsuz şikayet</strong> satır satır taranarak anında oluşturulmuştur.</p>`;
+      let html = `<h3 style="color:#2d7a4f;margin-bottom:16px;">🔍 Operasyonel İyileştirme Planı</h3>`;
+      html += `<p style="margin-bottom:16px;">Rapor, <strong>${negReviews.length} olumsuz şikayet</strong> taranarak oluşturulmuştur.</p>`;
 
       let groups = { 'Servis ve Gönderim': [], 'Yemek Kalitesi': [], 'Hijyen': [], 'Personel & Garsonlar': [] };
       negReviews.forEach(r => {
-        let txt = r.text.toLowerCase();
+        let txt = (r.text || '').toLowerCase();
         if (txt.includes('eksik') || txt.includes('servis') || txt.includes('gönder') || txt.includes('kurye') || txt.includes('yavaş')) groups['Servis ve Gönderim'].push(r.text);
         else if (txt.includes('kir') || txt.includes('pis') || txt.includes('temiz')) groups['Hijyen'].push(r.text);
         else if (txt.includes('garson') || txt.includes('kaba') || txt.includes('personel') || txt.includes('ilgilen')) groups['Personel & Garsonlar'].push(r.text);
@@ -92,20 +112,20 @@
 
       Object.entries(groups).forEach(([cat, list]) => {
         if (list.length === 0) return;
-        html += `<h3 style="color:#c8410a; margin-top:24px; border-bottom:1px solid #e8e0d5; padding-bottom:8px;">🚨 Sorun Alanı: ${cat}</h3>`;
-        html += `<ul style="margin-top:10px; margin-bottom:20px; padding-left:20px;">`;
+        html += `<h3 style="color:#c8410a;margin-top:24px;border-bottom:1px solid #e8e0d5;padding-bottom:8px;">🚨 Sorun Alanı: ${cat}</h3>`;
+        html += `<ul style="margin-top:10px;margin-bottom:20px;padding-left:20px;">`;
         list.slice(0, 2).forEach(msg => {
           html += `<li style="margin-bottom:8px;"><strong>Müşteri Geri Bildirimi:</strong> "${msg}"</li>`;
         });
-        html += `<li style="margin-bottom:8px; color:#1c1a17;"><strong>Nasıl Düzeltilmeli (Aksiyon Tavsiyesi):</strong> `;
+        html += `<li style="margin-bottom:8px;color:#1c1a17;"><strong>Aksiyon Tavsiyesi:</strong> `;
         if (cat === 'Servis ve Gönderim') {
-          html += `Sipariş paketleme sürecinde "çift onay" (double-check) kontrol listesine geçilmeli. Eksik ürün gönderimlerinde müşteriye bilgi vermeden ikram koymak yerine KESİNLİKLE telefonla aranarak özür dilenmeli ve telafi için rızası alınmalıdır.`;
+          html += `Sipariş paketleme sürecinde çift onay kontrol listesine geçilmeli. Eksik ürün durumunda müşteri mutlaka telefonla aranarak özür dilenmeli ve telafi için rıza alınmalıdır.`;
         } else if (cat === 'Hijyen') {
-          html += `Masa ve salon temizlik periyotları sıklaştırılmalı, günlük ve saatlik hijyen takip çizelgeleri restoran müdürü tarafından her saat başı imza altına alınmalıdır.`;
+          html += `Masa ve salon temizlik periyotları sıklaştırılmalı, saatlik hijyen takip çizelgeleri müdür tarafından imza altına alınmalıdır.`;
         } else if (cat === 'Personel & Garsonlar') {
-          html += `Çalışan kadroya kriz yönetimi, müşteri karşılama ve nezaket kuralları eğitimi acilen verilmeli, yoğun saatlerdeki masalar arası iş bölümü yeniden organize edilmelidir.`;
+          html += `Çalışanlara müşteri karşılama ve nezaket kuralları eğitimi verilmeli, yoğun saatlerdeki iş bölümü yeniden organize edilmelidir.`;
         } else {
-          html += `Ürünlerin standart mutfak reçeteleri, sıcaklık muhafazaları ve pişirme süreleri şef tarafından günlük olarak denetlenmeli, paket servis için termal çantalar yenilenmelidir.`;
+          html += `Ürünlerin standart reçeteleri, sıcaklık muhafazaları ve pişirme süreleri şef tarafından günlük denetlenmeli, paket servis için termal çantalar yenilenmelidir.`;
         }
         html += `</li></ul>`;
       });
@@ -121,7 +141,6 @@
       const result = await window.analyzeData(csvData);
       const negReviews = result.reviews.filter(r => r.sentiment === 'negative');
 
-      // Özet Kartları Render Et
       const bestCat = Object.entries(result.catScores).sort((a, b) => b[1] - a[1])[0];
       document.getElementById('summaryGrid').innerHTML = `
         <div class="summary-card"><div class="summary-card__label">Toplam Yorum</div><div class="summary-card__value">${result.stats.total}</div></div>
@@ -132,20 +151,23 @@
 
       document.getElementById('raporOutput').classList.add('visible');
       const aiContent = document.getElementById('aiContent');
-      aiContent.innerHTML = '<span class="cursor"></span>';
 
       if (negReviews.length === 0) {
-        aiContent.innerHTML = "<p>Harika! Analiz edilecek operasyonel bir olumsuz yorum bulunamadı.</p>";
+        aiContent.innerHTML = "<p>Harika! Analiz edilecek olumsuz yorum bulunamadı.</p>";
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('regenerateBtn').disabled = false;
         return;
       }
 
       const generateBtn = document.getElementById('generateBtn');
       const regenBtn = document.getElementById('regenerateBtn');
-      generateBtn.disabled = true; regenBtn.disabled = true;
+      generateBtn.disabled = true;
+      regenBtn.disabled = true;
 
       if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE' || apiKey === '') {
         aiContent.innerHTML = generateLocalActionReport(negReviews);
-        generateBtn.disabled = false; regenBtn.disabled = false;
+        generateBtn.disabled = false;
+        regenBtn.disabled = false;
         return;
       }
 
@@ -188,19 +210,19 @@
         }
         aiContent.innerHTML = formatReport(fullText);
       } catch {
-        // API Sürüm/Kota hatası verirse anında lokal akıllı şablonu bas!
         aiContent.innerHTML = generateLocalActionReport(negReviews);
       } finally {
-        generateBtn.disabled = false; regenBtn.disabled = false;
+        generateBtn.disabled = false;
+        regenBtn.disabled = false;
       }
     }
 
     function formatReport(text) {
       let html = text
-        .replace(/^### (.+)$/gm, '<h3 style="color:#c8410a; margin-top:24px; border-bottom:1px solid #e8e0d5; padding-bottom:8px;">$1</h3>')
+        .replace(/^### (.+)$/gm, '<h3 style="color:#c8410a;margin-top:24px;border-bottom:1px solid #e8e0d5;padding-bottom:8px;">$1</h3>')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/^[-•*] (.+)$/gm, '<li>$1</li>');
-      html = html.replace(/(<li>.*<\/li>(\n|$))+/gs, (match) => `<ul style="margin-top:10px; margin-bottom:20px; padding-left:20px;">${match}</ul>`);
+      html = html.replace(/(<li>.*<\/li>(\n|$))+/gs, (match) => `<ul style="margin-top:10px;margin-bottom:20px;padding-left:20px;">${match}</ul>`);
       return html.split(/\n{2,}/).map(b => (b.startsWith('<h3') || b.startsWith('<ul')) ? b : `<p style="margin-bottom:12px;">${b.trim()}</p>`).join('');
     }
   </script>
