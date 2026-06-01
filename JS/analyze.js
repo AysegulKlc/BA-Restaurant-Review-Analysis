@@ -1,7 +1,6 @@
 /**
  * @module SentimentAnalyzer
  * 1-10 Skor Sistemi ile Hibrit Analiz Motoru.
- * Çok Kötü / Kötü / Nötr / İyi / Çok İyi
  */
 
 // ── API Base URL (localhost vs Render) ───────────────────────────
@@ -10,11 +9,6 @@ const API_BASE = (window.location.hostname === 'localhost' || window.location.ho
   : 'https://ba-restaurant-review-analysis.onrender.com';
 
 localStorage.removeItem('geminiApiKey');
- * @module SentimentAnalyzer
- * 1-10 Skor Sistemi ile Hibrit Analiz Motoru.
- * Çok Kötü / Kötü / Nötr / İyi / Çok İyi
- */
-
 
 // ── Duygu Sözlükleri ────────────────────────────────────────────
 const POSITIVE_WORDS = [
@@ -68,14 +62,9 @@ const CATEGORY_KEYWORDS = {
 };
 
 // ── 1-10 Skor Sistemi ────────────────────────────────────────────
-
-/**
- * Ham metinden 1-10 arası skor hesaplar (lokal fallback).
- */
 function calculateScore(text) {
   if (!text) return 5;
   const lower = text.toLowerCase();
-
   let posScore = 0;
   let negScore = 0;
 
@@ -89,7 +78,6 @@ function calculateScore(text) {
   strongNeg.forEach(w => { if (lower.includes(w)) negScore += 2; });
   normalNeg.forEach(w => { if (lower.includes(w)) negScore += 1; });
 
-  // Negasyon: pozitif ve negatif skorları yer değiştir
   NEGATORS.forEach(w => {
     if (lower.includes(w)) {
       const tmp = posScore; posScore = negScore; negScore = tmp;
@@ -107,10 +95,6 @@ function calculateScore(text) {
   return 1;
 }
 
-/**
- * Skoru görsel etiket ve renge çevirir.
- * @param {number} score - 1-10 arası
- */
 function scoreToLabel(score) {
   if (score >= 9) return { label: 'Çok İyi',  emoji: '🌟', color: '#16a34a', bg: '#f0fdf4', sentiment: 'positive' };
   if (score >= 7) return { label: 'İyi',       emoji: '😊', color: '#65a30d', bg: '#f7fee7', sentiment: 'positive' };
@@ -119,7 +103,6 @@ function scoreToLabel(score) {
   return             { label: 'Çok Kötü', emoji: '😡', color: '#dc2626', bg: '#fef2f2', sentiment: 'negative' };
 }
 
-// ── Metin Temizleme ──────────────────────────────────────────────
 function cleanRawText(text) {
   if (!text) return "";
   return text.replace(/^[\d\s\-\;]+;/, '').trim();
@@ -150,7 +133,6 @@ function getTrendData(reviews, dateCol, ratingCol) {
   };
 }
 
-// ── Gelişmiş Lokal Analiz ────────────────────────────────────────
 function advancedClauseAnalyze(text) {
   const cleaned = cleanRawText(text);
   if (!cleaned) return { sentiment: 'neutral', score: 5, categories: ['Yemek Kalitesi'], catSentiments: {} };
@@ -185,11 +167,9 @@ function advancedClauseAnalyze(text) {
 
   if (finalCategories.size === 0) finalCategories.add('Yemek Kalitesi');
 
-  // Skor hesapla
   const score = calculateScore(text);
   const { sentiment } = scoreToLabel(score);
 
-  // catSentiments'i doldur
   finalCategories.forEach(cat => {
     if (!catSentiments[cat]) catSentiments[cat] = sentiment === 'neutral'
       ? (negCount >= posCount ? 'negative' : 'positive')
@@ -215,7 +195,6 @@ function calcCategoryScores(reviews) {
   return result;
 }
 
-// ── Stats Hesaplama (ortak) ──────────────────────────────────────
 function calcStats(reviews, rows, ratingCol) {
   const total = reviews.length;
   const positiveCount = reviews.filter(r => r.sentiment === 'positive').length;
@@ -223,7 +202,6 @@ function calcStats(reviews, rows, ratingCol) {
   const neutralCount  = reviews.filter(r => r.sentiment === 'neutral').length;
   const ratings = rows.map(r => r[ratingCol]).filter(p => p !== null && !isNaN(p));
 
-  // Skor dağılımı
   const veryGoodCount = reviews.filter(r => (r.score || 5) >= 9).length;
   const goodCount     = reviews.filter(r => (r.score || 5) >= 7 && (r.score || 5) < 9).length;
   const neutralCount2 = reviews.filter(r => (r.score || 5) >= 5 && (r.score || 5) < 7).length;
@@ -241,13 +219,11 @@ function calcStats(reviews, rows, ratingCol) {
     avgRating: ratings.length
       ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
       : null,
-    // Yeni: skor dağılımı
     scoreDist: { veryGoodCount, goodCount, neutralCount: neutralCount2, badCount, veryBadCount },
     avgScore
   };
 }
 
-// ── Lokal Analiz ────────────────────────────────────────────────
 function localAnalyzeData(cleanedData) {
   const { rows, commentCol, ratingCol, dateCol } = cleanedData;
   const reviews = rows.map(row => {
@@ -275,17 +251,16 @@ function localAnalyzeData(cleanedData) {
   };
 }
 
-// ── Ana Sunucu Köprüsü ───────────────────────────────────────────
 async function analyzeData(cleanedData) {
   const { rows, commentCol, ratingCol, dateCol } = cleanedData;
 
   try {
     const response = await fetch(`${API_BASE}/api/analyze`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ rows, commentCol }),
-  signal: AbortSignal.timeout(120000) // 2 dakika bekle
-});
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows, commentCol }),
+      signal: AbortSignal.timeout(120000)
+    });
 
     if (!response.ok) throw new Error();
 
@@ -298,7 +273,6 @@ async function analyzeData(cleanedData) {
       const aiData = geminiResult.find(g => g.id === index);
       const localFallback = advancedClauseAnalyze(text);
 
-      // Gemini'den score gelmediyse lokal hesapla
       const score = aiData ? (aiData.score || calculateScore(text)) : localFallback.score;
       const { sentiment: scoreSentiment } = scoreToLabel(score);
 
