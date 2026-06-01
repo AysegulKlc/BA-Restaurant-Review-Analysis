@@ -27,8 +27,13 @@ const NEGATIVE_WORDS = [
   'tuzlu', 'acı', 'ekşi', 'yanmış', 'az', 'yetersiz', 'düşük kalite',
   'zavallı', 'saçma', 'vasat', 'sıradan', 'para israf', 'israf', 'bekleme',
   'soğumuş', 'pişmemiş', 'ücret', 'şikayet', 'haksız', 'hatalı', 'yanlış',
-  'kokmuş', 'kokmus', 'ayıp', 'ayip', 'az pişmiş', 'az pismis', 'yollanır mı', 'yollanir mi',
-  'birdaha sipariş vermem', 'vermem', 'saçma', 'sacma', 'bekledik'
+  'kokmuş', 'kokmus', 'ayıp', 'ayip', 'az pişmiş', 'bekledik', 'vermem',
+  // Yeni eklenenler
+  'bakılmıyor', 'bakılmıyo', 'umursamaz', 'zayıf', 'gelmedi', 'gelmiyor',
+  'açılmamış', 'bahane', 'tenezzül', 'yakışmadı', 'asla gitmeyeceğim',
+  'bidaha', 'çiğ tavuk', 'değiştirmeye', 'kusurlu', 'rezil', 'berbat',
+  'hiç bakılmıyor', 'çok kirli', 'personel zayıf', 'umursamaz tavır',
+  'sormak zorunda', 'söylendi', 'denmedi', 'yakışmadı'
 ];
 
 const NEGATORS = ['değil', 'hiç', 'asla', 'hiçbir', 'yok', 'olmadı', 'olmaz', 'etmedi', 'etmez', 'yapmadı', 'yapmaz', 'istemiyorum', 'vermem'];
