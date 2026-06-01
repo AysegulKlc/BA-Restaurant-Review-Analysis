@@ -121,10 +121,22 @@ def analyze_reviews():
 
         return jsonify({"status": "success", "data": gemini_result})
 
+
     except Exception as e:
+
         import traceback
-        print(f"ANALIZ HATASI: {traceback.format_exc()}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+
+        error_detail = traceback.format_exc()
+
+        return jsonify({
+
+            "status": "error",
+
+            "message": str(e),
+
+            "detail": error_detail
+
+        }), 500
 
 
 # ── 2. Google Reviews – SerpApi Endpoint'i ──────────────────────
