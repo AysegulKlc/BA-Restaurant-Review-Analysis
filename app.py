@@ -12,10 +12,13 @@ import re
 
 app = Flask(__name__)
 CORS(app)
-# Statik dosyaları sun
+
+# ── Statik Dosya Servisi ─────────────────────────────────────────
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 @app.route('/')
 def index():
-    return send_from_directory('.', 'index.html')
+    return send_from_directory(BASE_DIR, 'index.html')
 
 @app.route('/<path:filename>')
 def static_files(filename):
@@ -23,7 +26,7 @@ def static_files(filename):
     if not mime_type:
         mime_type = 'application/octet-stream'
     try:
-        return send_from_directory('.', filename, mimetype=mime_type)
+        return send_from_directory(BASE_DIR, filename, mimetype=mime_type)
     except Exception:
         return "Not Found", 404
 
@@ -70,7 +73,7 @@ FORMAT:
 """
 
 
-# ── 1. Mevcut CSV Analiz Endpoint'i ─────────────────────────────
+# ── 1. CSV Analiz Endpoint'i ─────────────────────────────────────
 @app.route('/api/analyze', methods=['POST'])
 def analyze_reviews():
     try:
@@ -108,10 +111,6 @@ def analyze_reviews():
 # ── 2. Google Reviews – SerpApi Endpoint'i ──────────────────────
 @app.route('/api/google-reviews', methods=['POST'])
 def get_google_reviews():
-    """
-    SerpApi üzerinden Google Maps yorumlarını çeker.
-    Body: { "place_name": "Restoran Adı Şehir", "serpapi_key": "..." }
-    """
     try:
         data = request.json
         place_name = data.get('place_name', '').strip()
@@ -122,7 +121,6 @@ def get_google_reviews():
         if not serpapi_key:
             return jsonify({"status": "error", "message": "SerpApi key gerekli."}), 400
 
-        # Adım 1: Restoranı bul → place_id al
         search_params = {
             "engine": "google_maps",
             "q": place_name,
@@ -139,12 +137,11 @@ def get_google_reviews():
         search_resp.raise_for_status()
         search_data = search_resp.json()
 
-        # İlk sonuçtan data_id al
         local_results = search_data.get("local_results", [])
         if not local_results:
             return jsonify({
                 "status": "error",
-                "message": f"'{place_name}' için Google Maps'te sonuç bulunamadı. Daha spesifik bir isim deneyin (örn: 'Köfteci Yusuf Kayseri')."
+                "message": f"'{place_name}' için Google Maps'te sonuç bulunamadı."
             }), 404
 
         place = local_results[0]
@@ -156,14 +153,13 @@ def get_google_reviews():
         if not data_id:
             return jsonify({"status": "error", "message": "Yer bulunamadı."}), 404
 
-        # Adım 2: Yorumları çek
         reviews_params = {
-    "engine": "google_maps_reviews",
-    "data_id": data_id,
-    "api_key": serpapi_key,
-    "hl": "tr",
-    "sort_by": "newestFirst"
-}
+            "engine": "google_maps_reviews",
+            "data_id": data_id,
+            "api_key": serpapi_key,
+            "hl": "tr",
+            "sort_by": "newestFirst"
+        }
 
         reviews_resp = requests.get(
             "https://serpapi.com/search",
@@ -175,7 +171,6 @@ def get_google_reviews():
 
         raw_reviews = reviews_data.get("reviews", [])
 
-        # Standart formata çevir (CSV pipeline ile uyumlu)
         formatted_rows = []
         for rev in raw_reviews:
             text = rev.get("snippet", "") or rev.get("extracted_snippet", {}).get("original", "")
@@ -192,7 +187,7 @@ def get_google_reviews():
         if not formatted_rows:
             return jsonify({
                 "status": "error",
-                "message": "Bu restoran için yorum bulunamadı. Yorumlar Türkçe olmayabilir veya henüz yorum yapılmamış olabilir."
+                "message": "Bu restoran için yorum bulunamadı."
             }), 404
 
         return jsonify({
@@ -207,7 +202,7 @@ def get_google_reviews():
         })
 
     except requests.exceptions.Timeout:
-        return jsonify({"status": "error", "message": "SerpApi isteği zaman aşımına uğradı. Tekrar deneyin."}), 504
+        return jsonify({"status": "error", "message": "SerpApi isteği zaman aşımına uğradı."}), 504
     except requests.exceptions.RequestException as e:
         return jsonify({"status": "error", "message": f"Bağlantı hatası: {str(e)}"}), 502
     except Exception as e:
@@ -217,11 +212,6 @@ def get_google_reviews():
 # ── 3. Yemeksepeti Scraper Endpoint'i ───────────────────────────
 @app.route('/api/yemeksepeti', methods=['POST'])
 def get_yemeksepeti_reviews():
-    """
-    Yemeksepeti restoran yorumlarını çeker.
-    Body: { "restaurant_url": "https://www.yemeksepeti.com/restaurant/..." }
-    VEYA: { "restaurant_name": "Restoran Adı" } → arama yapıp URL bulur
-    """
     try:
         data = request.json
         restaurant_url = data.get('restaurant_url', '').strip()
@@ -234,19 +224,13 @@ def get_yemeksepeti_reviews():
             "Referer": "https://www.yemeksepeti.com/",
         }
 
-        # Eğer URL yoksa isme göre arama yap
         if not restaurant_url and restaurant_name:
             search_url = f"https://www.yemeksepeti.com/search/{requests.utils.quote(restaurant_name)}"
             search_resp = requests.get(search_url, headers=headers, timeout=15)
-
             soup = BeautifulSoup(search_resp.text, 'html.parser')
-
-            # İlk restoran kartının linkini bul
             restaurant_link = soup.find('a', class_=re.compile(r'restaurant|listing', re.I))
             if not restaurant_link:
-                # Alternatif: data-testid ile bul
                 restaurant_link = soup.find('a', attrs={'data-testid': re.compile(r'restaurant', re.I)})
-
             if restaurant_link and restaurant_link.get('href'):
                 href = restaurant_link['href']
                 restaurant_url = href if href.startswith('http') else f"https://www.yemeksepeti.com{href}"
@@ -259,48 +243,41 @@ def get_yemeksepeti_reviews():
         if not restaurant_url:
             return jsonify({"status": "error", "message": "Restoran URL'si veya adı gerekli."}), 400
 
-        # Yorum sayfasına git
-        # Yemeksepeti yorum URL formatı: /restaurant-slug/comments veya ?tab=reviews
         if '/comments' not in restaurant_url and 'reviews' not in restaurant_url:
             reviews_url = restaurant_url.rstrip('/') + '/comments'
         else:
             reviews_url = restaurant_url
 
-        time.sleep(1)  # Bot korumasına takılmamak için kısa bekleme
+        time.sleep(1)
 
         resp = requests.get(reviews_url, headers=headers, timeout=15)
-        resp.encoding = 'utf-8'  # Bu satırı ekle
+        resp.encoding = 'utf-8'
 
         if resp.status_code == 403:
             return jsonify({
                 "status": "error",
-                "message": "Yemeksepeti erişimi engelledi. Lütfen doğrudan URL'yi kopyalayarak tekrar deneyin veya biraz bekleyin."
+                "message": "Yemeksepeti erişimi engelledi. Doğrudan URL'yi kopyalayarak tekrar deneyin."
             }), 403
 
         if resp.status_code == 404:
-            # /comments çalışmadıysa ana URL'yi dene
             resp = requests.get(restaurant_url, headers=headers, timeout=15)
-            resp.encoding = 'utf-8'  # Bu satırı ekle
+            resp.encoding = 'utf-8'
 
         soup = BeautifulSoup(resp.text, 'html.parser')
 
-        # Restoran adını çek
         place_name_tag = soup.find('h1') or soup.find(class_=re.compile(r'restaurant.name|title', re.I))
         place_name_text = place_name_tag.get_text(strip=True) if place_name_tag else restaurant_name or "Yemeksepeti Restoranı"
 
-        # Yorumları çek – farklı HTML yapıları için çoklu seçici
         review_items = (
             soup.find_all(class_=re.compile(r'comment|review|yorum', re.I)) or
             soup.find_all(attrs={'data-testid': re.compile(r'comment|review', re.I)}) or
             soup.find_all('li', class_=re.compile(r'comment', re.I))
         )
 
-        # JSON-LD içinde yapılandırılmış yorum verisi ara (daha güvenilir)
         json_reviews = []
         for script in soup.find_all('script', type='application/ld+json'):
             try:
                 ld = json.loads(script.string or '{}')
-                # FoodEstablishment veya Restaurant şeması
                 if isinstance(ld, dict) and 'review' in ld:
                     json_reviews = ld['review']
                     break
@@ -314,7 +291,6 @@ def get_yemeksepeti_reviews():
 
         formatted_rows = []
 
-        # Önce JSON-LD verilerini kullan (en temiz)
         if json_reviews:
             for rev in json_reviews:
                 body = rev.get('reviewBody', '') or rev.get('description', '')
@@ -332,21 +308,16 @@ def get_yemeksepeti_reviews():
                     "yazar": rev.get('author', {}).get('name', 'Anonim') if isinstance(rev.get('author'), dict) else str(rev.get('author', 'Anonim'))
                 })
 
-        # JSON-LD bulunamazsa HTML parse et
         elif review_items:
             for item in review_items[:60]:
-                # Yorum metnini bul
                 text_tag = (
                     item.find(class_=re.compile(r'text|body|content|description', re.I)) or
                     item.find('p') or
                     item.find('span', class_=re.compile(r'comment', re.I))
                 )
                 text = text_tag.get_text(strip=True) if text_tag else item.get_text(strip=True)
-
                 if not text or len(text) < 5:
                     continue
-
-                # Puanı bul
                 rating_tag = item.find(class_=re.compile(r'rating|star|puan', re.I))
                 rating = None
                 if rating_tag:
@@ -354,11 +325,8 @@ def get_yemeksepeti_reviews():
                     rating_match = re.search(r'[\d.,]+', rating_text)
                     if rating_match:
                         rating = float(rating_match.group().replace(',', '.'))
-
-                # Tarihi bul
                 date_tag = item.find(class_=re.compile(r'date|time|tarih', re.I)) or item.find('time')
                 date = date_tag.get_text(strip=True) if date_tag else ''
-
                 formatted_rows.append({
                     "yorum": text,
                     "puan": rating,
@@ -370,7 +338,7 @@ def get_yemeksepeti_reviews():
         if not formatted_rows:
             return jsonify({
                 "status": "error",
-                "message": "Yorumlar çekilemedi. Yemeksepeti sayfa yapısı değişmiş olabilir. Doğrudan URL'yi kontrol edin ya da CSV yolunu kullanın."
+                "message": "Yorumlar çekilemedi. Doğrudan URL'yi kontrol edin ya da CSV yolunu kullanın."
             }), 422
 
         return jsonify({
@@ -389,5 +357,4 @@ def get_yemeksepeti_reviews():
 
 
 if __name__ == '__main__':
-    import os
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
