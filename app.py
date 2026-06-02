@@ -41,7 +41,10 @@ def static_files(filename):
         return "Not Found", 404
 
 API_KEY = os.environ.get('GEMINI_API_KEY', '')
-client = genai.Client(api_key=API_KEY) if API_KEY else None
+try:
+    client = genai.Client(api_key=API_KEY) if API_KEY else None
+except Exception:
+    client = None
 MODEL_ID = "gemini-2.0-flash-lite"
 
 SISTEM_TALIMATI = """
@@ -81,7 +84,7 @@ def ping():
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_reviews():
-    if not API_KEY:
+    if not client:
         return jsonify({"status": "error", "message": "API key tanımlı değil."}), 500
     try:
         data = request.json
@@ -96,11 +99,6 @@ def analyze_reviews():
 
         prompt = f"{SISTEM_TALIMATI}\n\nYorumlar:\n{yorum_metinleri}"
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent"
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.1}
-        }
         response = client.models.generate_content(
             model=MODEL_ID,
             contents=prompt,
@@ -131,8 +129,7 @@ def get_google_reviews():
             "api_key": serpapi_key, "hl": "tr", "gl": "tr"
         }, timeout=15)
         search_resp.raise_for_status()
-        search_data = search_resp.json()
-        local_results = search_data.get("local_results", [])
+        local_results = search_resp.json().get("local_results", [])
         if not local_results:
             return jsonify({"status": "error", "message": f"'{place_name}' için sonuç bulunamadı."}), 404
 
